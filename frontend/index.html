@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Image Forensic API</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+
+  <body class="bg-slate-100 text-slate-800 min-h-screen py-8">
+    <div class="max-w-6xl mx-auto px-4">
+      <header class="mb-6">
+        <h1 class="text-3xl font-bold">🔍 Image Forensic Analyzer</h1>
+
+        <p class="text-slate-600">Analiza imágenes usando la API forense.</p>
+      </header>
+
+      <section class="grid md:grid-cols-3 gap-6">
+        <!-- PANEL IZQUIERDO -->
+        <div class="bg-white rounded-xl shadow p-5">
+          <form id="uploadForm">
+            <label class="font-semibold"> Seleccionar imagen </label>
+
+            <input
+              id="fileInput"
+              type="file"
+              accept="image/*"
+              class="block w-full mt-3 border p-2 rounded"
+            />
+
+            <div class="flex gap-3 mt-4">
+              <button
+                type="submit"
+                id="analyzeBtn"
+                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+              >
+                Analizar
+              </button>
+
+              <button
+                type="button"
+                id="clearBtn"
+                class="bg-gray-200 px-4 py-2 rounded"
+              >
+                Limpiar
+              </button>
+            </div>
+
+            <div
+              id="preview"
+              class="mt-5 h-56 border rounded flex items-center justify-center bg-slate-50 overflow-hidden"
+            >
+              <span class="text-gray-400"> Vista previa </span>
+            </div>
+
+            <p class="mt-4">
+              Estado:
+              <span id="status" class="font-bold"> esperando </span>
+            </p>
+          </form>
+        </div>
+
+        <!-- PANEL DERECHO -->
+        <div class="md:col-span-2 bg-white rounded-xl shadow p-5">
+          <div class="flex justify-between">
+            <h2 class="text-xl font-bold">Resultado</h2>
+
+            <span class="text-sm text-gray-500"> POST /analyze </span>
+          </div>
+
+          <div id="sections" class="grid lg:grid-cols-2 gap-4 mt-5"></div>
+
+          <details class="mt-5 bg-slate-900 text-white rounded p-4">
+            <summary class="cursor-pointer">JSON completo</summary>
+
+            <pre id="raw" class="text-xs mt-3 whitespace-pre-wrap"></pre>
+          </details>
+
+          <div
+            class="mt-5 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded"
+          >
+            <h3 class="font-bold">Interpretación</h3>
+
+            <div id="interpretation" class="mt-2 text-sm"></div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      const API_URL = "http://127.0.0.1:8000/analyze";
+
+      const form = document.getElementById("uploadForm");
+
+      const fileInput = document.getElementById("fileInput");
+
+      const preview = document.getElementById("preview");
+
+      const status = document.getElementById("status");
+
+      const sections = document.getElementById("sections");
+
+      const raw = document.getElementById("raw");
+
+      const interpretation = document.getElementById("interpretation");
+
+      // PREVIEW IMAGEN
+
+      fileInput.addEventListener("change", () => {
+        const file = fileInput.files[0];
+
+        if (!file) return;
+
+        const url = URL.createObjectURL(file);
+
+        preview.innerHTML = "";
+
+        const img = document.createElement("img");
+
+        img.src = url;
+
+        img.className = "max-h-full max-w-full object-contain";
+
+        img.onload = () => {
+          URL.revokeObjectURL(url);
+        };
+
+        preview.appendChild(img);
+      });
+
+      // LIMPIAR
+
+      document.getElementById("clearBtn").addEventListener("click", () => {
+        fileInput.value = "";
+
+        preview.innerHTML = `
+<span class="text-gray-400">
+Vista previa
+</span>
+`;
+
+        sections.innerHTML = "";
+
+        raw.textContent = "";
+
+        interpretation.innerHTML = "";
+
+        status.textContent = "esperando";
+      });
+
+      // CREAR TARJETAS JSON
+
+      function createCard(title, data) {
+        const card = document.createElement("div");
+
+        card.className = "border rounded-lg p-4 bg-slate-50";
+
+        card.innerHTML = `
+<h3 class="font-bold mb-3">
+${title}
+</h3>
+`;
+
+        const content = document.createElement("div");
+
+        content.className = "text-sm space-y-1";
+
+        if (typeof data === "object" && data !== null) {
+          Object.entries(data).forEach(([key, value]) => {
+            const row = document.createElement("div");
+
+            row.innerHTML = `
+<b>${key}:</b>
+${typeof value === "object" ? JSON.stringify(value) : value}
+`;
+
+            content.appendChild(row);
+          });
+        } else {
+          content.textContent = data;
+        }
+
+        card.appendChild(content);
+
+        return card;
+      }
+
+      // INTERPRETACION
+
+      function generateInterpretation(data) {
+        let result = [];
+
+        if (data.exif) {
+          result.push("Se analizaron metadatos EXIF.");
+        }
+
+        if (data.ela) {
+          if (data.ela.possible_manipulation) {
+            result.push("⚠️ ELA detectó posibles modificaciones.");
+          } else {
+            result.push("✅ No se detectaron cambios fuertes mediante ELA.");
+          }
+        }
+
+        if (data.hashes) {
+          result.push("Se generaron hashes criptográficos.");
+        }
+
+        if (data.compression) {
+          result.push("Se analizó la compresión de la imagen.");
+        }
+
+        return result;
+      }
+
+      // ENVIAR API
+
+      form.addEventListener("submit", async (e) => {
+        // EVITA RECARGAR PAGINA
+        e.preventDefault();
+
+        const file = fileInput.files[0];
+
+        if (!file) {
+          alert("Selecciona una imagen");
+
+          return;
+        }
+
+        status.textContent = "analizando...";
+
+        sections.innerHTML = "";
+
+        raw.textContent = "";
+
+        interpretation.innerHTML = "";
+
+        try {
+          const formData = new FormData();
+
+          formData.append("file", file);
+
+          const response = await fetch(API_URL, {
+            method: "POST",
+            body: formData,
+          });
+
+          if (!response.ok) {
+            throw new Error(await response.text());
+          }
+
+          const data = await response.json();
+
+          status.textContent = "completado";
+
+          // MOSTRAR RESULTADO
+
+          raw.textContent = JSON.stringify(data, null, 2);
+
+          Object.entries(data).forEach(([key, value]) => {
+            sections.appendChild(createCard(key, value));
+          });
+
+          const messages = generateInterpretation(data);
+
+          interpretation.innerHTML = messages
+            .map((x) => `<p>• ${x}</p>`)
+            .join("");
+        } catch (error) {
+          status.textContent = "error";
+
+          raw.textContent = error.message;
+        }
+      });
+    </script>
+  </body>
+</html>

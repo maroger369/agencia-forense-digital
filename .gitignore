@@ -1,0 +1,51 @@
+# Entorno virtual
+venv/
+.venv/
+
+# Cache de Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Archivos compilados
+*.so
+
+# Variables de entorno
+.env
+.env.*
+
+# Archivos temporales
+temp/
+tmp/
+
+# Archivos generados por la API
+uploads/
+reports/
+
+# Logs
+*.log
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/
+
+# Pytest
+.pytest_cache/
+
+# Mypy
+.mypy_cache/
+
+# Ruff
+.ruff_cache/
+
+# Cobertura
+.coverage
+htmlcov/
+
+# Distribución
+build/
+dist/
+*.egg-info/
