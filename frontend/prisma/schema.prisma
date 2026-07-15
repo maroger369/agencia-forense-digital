@@ -1,0 +1,93 @@
+// Schema for Agencia de Análisis Forense Digital
+// Cochabamba, Bolivia
+
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum UserRole {
+  CLIENTE
+  REVISOR
+  ADMIN
+}
+
+enum EvidenceStatus {
+  PENDIENTE
+  REVISANDO
+  TERMINADO
+  RECEPCIONADO
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String
+  ci        String   @unique
+  phone     String
+  role      UserRole @default(CLIENTE)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  evidences  Evidence[]
+  analysis   AnalysisResult[]
+  certificates Certificate[]
+}
+
+model Evidence {
+  id               String         @id @default(cuid())
+  userId           String
+  imagePath        String
+  originalName     String
+  description      String         @default("")
+  status           EvidenceStatus @default(PENDIENTE)
+  amount           Float          @default(50.00)
+  paymentVerified  Boolean        @default(false)
+  paymentProofPath String?
+  qrPaymentPath    String?
+  hash             String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  user        User             @relation(fields: [userId], references: [id])
+  analysis    AnalysisResult?
+  certificate Certificate?
+}
+
+model AnalysisResult {
+  id            String   @id @default(cuid())
+  evidenceId    String   @unique
+  elaScore      Float?
+  elaResult     String?
+  elaImagePath  String?
+  histogramData String?  // JSON
+  exifData      String?  // JSON
+  hashesData    String?  // JSON
+  compressionData String? // JSON
+  noiseData     String?  // JSON
+  forensicReport String?  // Texto del dictamen
+  analyzedBy    String?
+  createdAt     DateTime @default(now())
+
+  evidence  Evidence @relation(fields: [evidenceId], references: [id])
+  analyst   User?    @relation(fields: [analyzedBy], references: [id])
+}
+
+model Certificate {
+  id             String   @id @default(cuid())
+  evidenceId     String   @unique
+  certificateHash String  @unique
+  qrCode         String
+  pdfPath        String?
+  generatedAt    DateTime @default(now())
+  generatedBy    String
+
+  evidence Evidence @relation(fields: [evidenceId], references: [id])
+  author   User     @relation(fields: [generatedBy], references: [id])
+}
