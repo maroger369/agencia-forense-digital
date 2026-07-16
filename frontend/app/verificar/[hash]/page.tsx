@@ -10,6 +10,7 @@ import { Button } from "@/app/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/ui/card";
 import { Badge } from "@/app/components/ui/badge";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function VerifyCertificatePage() {
   const { hash } = useParams();
@@ -69,21 +70,26 @@ export default function VerifyCertificatePage() {
   if (!result) return null;
 
   return (
-    <div className="min-h-screen bg-background p-4">
-      <div className="max-w-3xl mx-auto py-8 space-y-6 animate-fade-in">
+    <div className="min-h-screen bg-background p-4 relative overflow-hidden">
+      {/* Marca de agua de fondo fija al centro */}
+      <div className="pointer-events-none fixed inset-0 flex items-center justify-center opacity-10 dark:opacity-10 z-0">
+        <Image src="/logo/logo-afd.png" alt="Watermark" width={800} height={800} className="object-contain opacity-40" />
+      </div>
+
+      <div className="max-w-3xl mx-auto py-8 space-y-6 animate-fade-in relative z-10">
         {/* Header */}
         <div className="text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-emerald-500/20 mb-4">
-            <CheckCircle2 className="w-8 h-8 text-emerald-400" />
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-emerald-500/20 mb-4 ring-4 ring-emerald-500/30">
+            <CheckCircle2 className="w-10 h-10 text-emerald-500 dark:text-emerald-400" />
           </div>
-          <h1 className="text-2xl font-bold mb-1">Certificado Verificado</h1>
-          <p className="text-muted-foreground">
-            Este certificado es válido y ha sido emitido por la Agencia de Análisis Forense Digital
+          <h1 className="text-3xl font-bold mb-2 text-foreground">Certificado Auténtico y Verificado</h1>
+          <p className="text-muted-foreground text-sm max-w-xl mx-auto">
+            Este documento digital es <strong className="text-emerald-600 dark:text-emerald-400">REAL</strong> y ha sido auditado técnicamente por el sistema inteligente de la Agencia de Análisis Forense Digital. Cuenta con un código criptográfico único e inalterable que garantiza su integridad.
           </p>
         </div>
 
         {/* Info del certificado */}
-        <Card>
+        <Card className="bg-background/60 backdrop-blur-md shadow-xl border-primary/10">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Shield className="w-5 h-5 text-primary" />
@@ -118,7 +124,7 @@ export default function VerifyCertificatePage() {
 
         {/* Si requiere autenticación */}
         {result.requiereAutenticacion && (
-          <Card>
+          <Card className="bg-background/60 backdrop-blur-md shadow-xl border-primary/10">
             <CardContent className="p-8 text-center">
               <Shield className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">Información Adicional</h3>
@@ -140,7 +146,7 @@ export default function VerifyCertificatePage() {
         {/* Info completa (autenticado) */}
         {result.evidencia && (
           <>
-            <Card>
+            <Card className="bg-background/60 backdrop-blur-md shadow-xl border-primary/10">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <FileText className="w-5 h-5 text-amber-400" />
@@ -170,7 +176,7 @@ export default function VerifyCertificatePage() {
             </Card>
 
             {result.analisis && (
-              <Card>
+              <Card className="bg-background/60 backdrop-blur-md shadow-xl border-primary/10">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Fingerprint className="w-5 h-5 text-purple-400" />
