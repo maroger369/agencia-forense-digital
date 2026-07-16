@@ -76,7 +76,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
             <Button 
               variant="ghost" 
               size="icon" 
-              className="lg:hidden w-9 h-9 ml-1"
+              className="w-9 h-9 ml-1"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             >
               {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -131,9 +131,10 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex-1 w-full grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-6">
-        <aside className="hidden lg:block lg:sticky lg:top-24 lg:self-start">
-          <nav className="bg-card border border-border rounded-xl p-3 space-y-4 shadow-sm transition-colors duration-200">
+      <div className={`max-w-7xl mx-auto px-4 sm:px-6 py-6 flex-1 w-full grid grid-cols-1 gap-6 transition-all duration-300 ${isMobileMenuOpen ? "lg:grid-cols-[240px_1fr]" : ""}`}>
+        {isMobileMenuOpen && (
+          <aside className="hidden lg:block lg:sticky lg:top-24 lg:self-start animate-fade-in">
+            <nav className="bg-card border border-border rounded-xl p-3 space-y-4 shadow-sm transition-colors duration-200">
             
             {isClient && (
               <div>
@@ -171,9 +172,10 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
               </div>
             )}
             
-          </nav>
-          <p className="text-xs text-muted-foreground mt-4 px-2">v0.1 · Demo interna · Datos reales.</p>
-        </aside>
+            </nav>
+            <p className="text-xs text-muted-foreground mt-4 px-2">v0.1 · Demo interna · Datos reales.</p>
+          </aside>
+        )}
 
         <main className="min-w-0">
           {children}
