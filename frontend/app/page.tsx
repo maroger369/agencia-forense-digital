@@ -61,23 +61,24 @@ export default function LandingPage() {
               <span className="sr-only">Toggle theme</span>
             </Button>
             
-            <div className="hidden md:flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4">
               {user ? (
                 <Link href={dashboardPath}>
-                  <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 transition-all font-medium">
+                  <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 transition-all font-medium px-4">
                     Ir al Panel
                   </Button>
                 </Link>
               ) : (
                 <>
-                  <Link href="/auth/login">
+                  <Link href="/auth/login" className="hidden md:block">
                     <Button variant="ghost" size="sm" className="font-medium hover:bg-muted/50 transition-colors">
                       Iniciar Sesión
                     </Button>
                   </Link>
                   <Link href="/auth/register">
-                    <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 transition-all font-medium">
-                      Acceder al Portal
+                    <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 transition-all font-medium px-4">
+                      <span className="hidden md:inline">Acceder al Portal</span>
+                      <span className="md:hidden">Comenzar</span>
                     </Button>
                   </Link>
                 </>

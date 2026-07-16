@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { Shield, LayoutDashboard, FileSearch, FileBadge, LogOut, Moon, Sun, CheckCircle2, ChevronRight, Search, FileText, Menu, X } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Button } from "@/app/components/ui/button";
@@ -46,11 +47,11 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 flex-shrink-0 flex items-center justify-center">
-              <img src="/logo/logo-afd.png" alt="AFD Logo" className="w-8 h-8 object-contain" />
+              <Image src="/logo/logo-afd.png" alt="AFD Logo" width={32} height={32} className="w-8 h-8 object-contain" priority />
             </div>
             <div>
               <h1 className="text-sm sm:text-base font-bold leading-tight">Agencia de Análisis Forense Digital</h1>
-              <p className="text-[11px] text-muted-foreground leading-tight">Cochabamba · Bolivia · Demo</p>
+              <p className="text-xs text-muted-foreground leading-tight">Cochabamba · Bolivia · Demo</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -91,7 +92,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
             <nav className="space-y-6">
               {isClient && (
                 <div>
-                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-2 mb-2">Cliente</p>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2 mb-2">Cliente</p>
                   <div className="space-y-1">
                     <Link href="/dashboard" onClick={() => setIsMobileMenuOpen(false)} className={`w-full flex items-center gap-2 px-3 py-3 rounded-md text-sm transition-colors ${pathname === "/dashboard" ? "bg-primary text-primary-foreground font-medium shadow-sm" : "text-muted-foreground hover:bg-secondary hover:text-foreground"}`}>
                       <LayoutDashboard className="w-5 h-5" />
@@ -107,7 +108,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
 
               {isAdmin && (
                 <div>
-                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-2 mb-2">Agencia</p>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2 mb-2">Agencia</p>
                   <div className="space-y-1">
                     <Link href="/admin/evidencias" onClick={() => setIsMobileMenuOpen(false)} className={`w-full flex items-center gap-2 px-3 py-3 rounded-md text-sm transition-colors ${pathname === "/admin/evidencias" ? "bg-primary text-primary-foreground font-medium shadow-sm" : "text-muted-foreground hover:bg-secondary hover:text-foreground"}`}>
                       <LayoutDashboard className="w-5 h-5" />
@@ -125,7 +126,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
                 </div>
               )}
             </nav>
-            <p className="text-[10px] text-muted-foreground mt-8 px-2">v0.1 · Demo interna · Datos reales.</p>
+            <p className="text-xs text-muted-foreground mt-8 px-2">v0.1 · Demo interna · Datos reales.</p>
           </div>
         </div>
       )}
@@ -136,7 +137,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
             
             {isClient && (
               <div>
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-2 mb-2">Cliente</p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2 mb-2">Cliente</p>
                 <div className="space-y-1">
                   <Link href="/dashboard" className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors ${pathname === "/dashboard" ? "bg-primary text-primary-foreground font-medium shadow-sm" : "text-muted-foreground hover:bg-secondary hover:text-foreground"}`}>
                     <LayoutDashboard className="w-4 h-4" />
@@ -152,7 +153,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
 
             {isAdmin && (
               <div>
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider px-2 mb-2">Agencia</p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider px-2 mb-2">Agencia</p>
                 <div className="space-y-1">
                   <Link href="/admin/evidencias" className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors ${pathname === "/admin/evidencias" ? "bg-primary text-primary-foreground font-medium shadow-sm" : "text-muted-foreground hover:bg-secondary hover:text-foreground"}`}>
                     <LayoutDashboard className="w-4 h-4" />
@@ -171,7 +172,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
             )}
             
           </nav>
-          <p className="text-[10px] text-muted-foreground mt-4 px-2">v0.1 · Demo interna · Datos reales.</p>
+          <p className="text-xs text-muted-foreground mt-4 px-2">v0.1 · Demo interna · Datos reales.</p>
         </aside>
 
         <main className="min-w-0">
