@@ -19,6 +19,18 @@ export function middleware(request: NextRequest) {
 
   // Allow public paths
   if (publicPaths.some((p) => pathname.startsWith(p))) {
+    // Si es login o register, verificamos si ya está autenticado para redirigirlo
+    if (pathname.startsWith("/auth/login") || pathname.startsWith("/auth/register")) {
+      const token = getTokenFromRequest(request);
+      if (token) {
+        const payload = verifyToken(token);
+        if (payload) {
+          const redirectPath = payload.role === "CLIENTE" ? "/dashboard" : "/admin/evidencias";
+          return NextResponse.redirect(new URL(redirectPath, request.url));
+        }
+      }
+    }
+
     // Even for public paths, remove the prefix condition
     if (pathname.startsWith("/api/verificar/")) {
       // Allow certificate verification API

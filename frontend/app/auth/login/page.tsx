@@ -44,7 +44,7 @@ export default function LoginPage() {
       if (data.user.role === "CLIENTE") {
         router.push("/dashboard");
       } else {
-        router.push("/admin");
+        router.push("/admin/evidencias");
       }
     } catch {
       setError("Error de conexión. Intenta de nuevo.");
@@ -60,8 +60,8 @@ export default function LoginPage() {
       <div className="animate-fade-in w-full max-w-md relative">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-forensic-purple shadow-lg shadow-primary/20 mb-4">
-            <Shield className="w-8 h-8 text-white" />
+          <div className="inline-flex items-center justify-center p-2 rounded-2xl shadow-lg mb-4 bg-white/5">
+            <img src="/logo/logo-afd.png" alt="AFD Logo" className="w-16 h-16 object-contain" />
           </div>
           <h1 className="text-2xl font-bold">Agencia de Análisis Forense Digital</h1>
           <p className="text-sm text-muted-foreground mt-1">
