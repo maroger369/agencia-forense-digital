@@ -4,10 +4,11 @@ import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import {
   Shield, LayoutDashboard, FileText, Users,
-  ChevronLeft, LogOut, Menu
+  LogOut, Menu, PanelLeftClose, PanelLeftOpen
 } from "lucide-react";
-import { Button } from "@/app/components/ui/button";
+import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
@@ -47,8 +48,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       >
         <div className="p-4 border-b border-border/50">
           <div className="flex items-center gap-3">
-            <div className="bg-gradient-to-br from-primary to-forensic-purple p-2 rounded-xl flex-shrink-0">
-              <Shield className="w-5 h-5 text-white" />
+            <div className="flex-shrink-0 flex items-center justify-center">
+              <img src="/logo/logo-afd.png" alt="AFD Logo" className="w-10 h-10 object-contain rounded-xl" />
             </div>
             {sidebarOpen && (
               <div className="min-w-0">
@@ -84,13 +85,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         <div className="p-3 border-t border-border/50 space-y-1">
           <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-sidebar-foreground hover:bg-sidebar-accent transition-all"
-          >
-            <ChevronLeft className={`w-5 h-5 transition-transform ${!sidebarOpen && "rotate-180"}`} />
-            {sidebarOpen && <span>Colapsar</span>}
-          </button>
-          <button
             onClick={async () => {
               await fetch("/api/auth/logout", { method: "POST" });
               router.push("/");
@@ -104,8 +98,46 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </aside>
 
       {/* Main */}
-      <main className={`flex-1 transition-all duration-300 ${sidebarOpen ? "ml-64" : "ml-16"}`}>
-        <div className="p-6">
+      <main className={`flex-1 transition-all duration-300 ${sidebarOpen ? "ml-64" : "ml-16"} flex flex-col min-h-screen`}>
+        
+        {/* Top Header */}
+        <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border/50 bg-background/80 px-4 md:px-6 backdrop-blur">
+          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="text-muted-foreground hover:text-foreground hidden sm:flex"
+              title={sidebarOpen ? "Colapsar menú" : "Expandir menú"}
+            >
+              {sidebarOpen ? <PanelLeftClose className="w-5 h-5" /> : <PanelLeftOpen className="w-5 h-5" />}
+            </Button>
+            <div className="flex items-center gap-2">
+              {pathname.split("/").filter(Boolean).map((segment, index, arr) => {
+              const isLast = index === arr.length - 1;
+              const href = "/" + arr.slice(0, index + 1).join("/");
+              const label = segment.charAt(0).toUpperCase() + segment.slice(1);
+              return (
+                <div key={href} className="flex items-center gap-2">
+                  {index > 0 && <span>/</span>}
+                  {isLast ? (
+                    <span className="font-medium text-foreground">{label}</span>
+                  ) : (
+                    <Link href={href} className="hover:text-foreground transition-colors">
+                      {label}
+                    </Link>
+                  )}
+                </div>
+              );
+              })}
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+             <ThemeToggle />
+          </div>
+        </header>
+
+        <div className="p-6 flex-1">
           {children}
         </div>
       </main>

@@ -1,48 +1,36 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import {
-  FileText, Eye, Search, Filter,
-  ArrowUpDown, Shield
-} from "lucide-react";
-import { Button } from "@/app/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/ui/card";
-import { Badge } from "@/app/components/ui/badge";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
-
-const statusFilterOptions = [
-  { value: "", label: "Todos" },
-  { value: "PENDIENTE", label: "Pendiente" },
-  { value: "REVISANDO", label: "En Revisión" },
-  { value: "TERMINADO", label: "Completado" },
-  { value: "RECEPCIONADO", label: "Recepcionado" },
-];
+import { Button } from "@/app/components/ui/button";
 
 export default function AdminEvidenciasPage() {
-  const router = useRouter();
   const [evidencias, setEvidencias] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  const [statusFilter, setStatusFilter] = useState("TODAS");
 
   useEffect(() => {
     fetchEvidencias();
-  }, [statusFilter, page]);
+  }, [statusFilter]);
 
   const fetchEvidencias = async () => {
     try {
       setLoading(true);
-      const params = new URLSearchParams({ page: String(page), limit: "10" });
-      if (statusFilter) params.set("status", statusFilter);
-
-      const res = await fetch(`/api/evidencias?${params}`);
-      if (!res.ok) { router.push("/auth/login"); return; }
-      const data = await res.json();
-      setEvidencias(data.evidencias || []);
-      setTotalPages(data.pagination?.totalPages || 1);
+      const params = new URLSearchParams({ limit: "50" });
+      if (statusFilter !== "TODAS") {
+        params.set("status", statusFilter);
+      }
+      const res = await fetch(`/api/admin/evidencias?${params}`);
+      if (res.ok) {
+        const data = await res.json();
+        setEvidencias(data.evidencias || []);
+      } else if (res.status === 404) {
+        const altRes = await fetch(`/api/evidencias?${params}`);
+        if (altRes.ok) {
+          const data = await altRes.json();
+          setEvidencias(data.evidencias || []);
+        }
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -51,146 +39,90 @@ export default function AdminEvidenciasPage() {
   };
 
   const getStatusBadge = (status: string) => {
-    const config: Record<string, { label: string; variant: "warning" | "info" | "success" | "purple" }> = {
-      PENDIENTE: { label: "Pendiente", variant: "warning" },
-      REVISANDO: { label: "En Revisión", variant: "info" },
-      TERMINADO: { label: "Completado", variant: "success" },
-      RECEPCIONADO: { label: "Recepcionado", variant: "purple" },
-    };
-    const c = config[status] || { label: status, variant: "default" as const };
-    return <Badge variant={c.variant}>{c.label}</Badge>;
+    switch(status) {
+      case "PENDIENTE": return <span className="bg-amber-500/10 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded text-[10px] font-medium border border-amber-500/20">Pendiente de pago</span>;
+      case "REVISANDO": return <span className="bg-sky-500/10 text-sky-600 dark:text-sky-400 px-2 py-0.5 rounded text-[10px] font-medium border border-sky-500/20">En revisión</span>;
+      case "TERMINADO": return <span className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded text-[10px] font-medium border border-emerald-500/20">Análisis finalizado</span>;
+      default: return <span className="bg-muted text-muted-foreground px-2 py-0.5 rounded text-[10px] font-medium border border-border">{status}</span>;
+    }
   };
 
-  const filteredEvidencias = evidencias.filter((e) =>
-    e.originalName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    e.user?.name?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Gestión de Evidencias</h1>
-          <p className="text-muted-foreground">
-            Administra y revisa las solicitudes de certificación
-          </p>
+    <div className="animate-fade-in">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-card border border-border p-6 rounded-3xl shadow-sm mb-6">
+        <div className="flex items-center gap-4">
+          <div className="bg-primary/10 p-3 rounded-2xl text-primary">
+            <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold bg-clip-text">Dashboard de Casos</h1>
+            <p className="text-sm text-muted-foreground mt-1">Agencia de Análisis Forense Digital • v2.0</p>
+          </div>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-4 items-center">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <input
-            type="text"
-            placeholder="Buscar por archivo o cliente..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full h-10 pl-10 pr-4 rounded-xl border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-          />
+      <div className="bg-card border border-border rounded-xl shadow-sm">
+        <div className="p-5 border-b border-border flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <h2 className="text-lg font-bold">Listado de Evidencias</h2>
+          
+          <div className="flex bg-muted p-1 rounded-md overflow-x-auto max-w-full">
+            {["TODAS", "PENDIENTE", "REVISANDO", "TERMINADO"].map(status => (
+              <button 
+                key={status}
+                onClick={() => setStatusFilter(status)}
+                className={`px-3 py-1.5 text-xs font-medium rounded-sm transition whitespace-nowrap ${statusFilter === status ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                {status === "TODAS" ? "Todas" : status === "PENDIENTE" ? "Nuevas" : status === "REVISANDO" ? "En Proceso" : "Completadas"}
+              </button>
+            ))}
+          </div>
         </div>
 
-        <div className="flex gap-2">
-          {statusFilterOptions.map((opt) => (
-            <button
-              key={opt.value}
-              onClick={() => { setStatusFilter(opt.value); setPage(1); }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                statusFilter === opt.value
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Table */}
-      <Card>
-        <CardContent className="p-0">
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-            </div>
-          ) : filteredEvidencias.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <FileText className="w-12 h-12 mx-auto mb-3 opacity-50" />
-              <p>No se encontraron evidencias</p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-border">
-                    <th className="text-left p-4 text-sm font-medium text-muted-foreground">Archivo</th>
-                    <th className="text-left p-4 text-sm font-medium text-muted-foreground">Cliente</th>
-                    <th className="text-left p-4 text-sm font-medium text-muted-foreground">CI</th>
-                    <th className="text-left p-4 text-sm font-medium text-muted-foreground">Estado</th>
-                    <th className="text-left p-4 text-sm font-medium text-muted-foreground">Pago</th>
-                    <th className="text-left p-4 text-sm font-medium text-muted-foreground">Fecha</th>
-                    <th className="text-right p-4 text-sm font-medium text-muted-foreground">Acción</th>
+        {loading ? (
+          <div className="text-center py-10 text-muted-foreground text-sm">Cargando evidencias...</div>
+        ) : evidencias.length === 0 ? (
+          <div className="text-center py-10 text-muted-foreground text-sm">No se encontraron casos.</div>
+        ) : (
+          <div className="overflow-x-auto p-5">
+            <table className="w-full text-left text-sm whitespace-nowrap">
+              <thead className="bg-muted/50 border-b border-border text-muted-foreground">
+                <tr>
+                  <th className="px-4 py-3 font-medium">Cliente / Caso</th>
+                  <th className="px-4 py-3 font-medium">Evidencia</th>
+                  <th className="px-4 py-3 font-medium">Fecha Recepción</th>
+                  <th className="px-4 py-3 font-medium">Estado</th>
+                  <th className="px-4 py-3 font-medium text-right">Acción</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {evidencias.map((evidence) => (
+                  <tr key={evidence.id} className="hover:bg-muted/30 transition-colors">
+                    <td className="px-4 py-3 font-medium">
+                      {evidence.user?.name || "Cliente Anónimo"} <span className="text-muted-foreground font-normal ml-2">CI: {evidence.user?.ci || "N/A"}</span>
+                    </td>
+                    <td className="px-4 py-3 flex items-center gap-2">
+                      <svg className="w-4 h-4 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                      {evidence.originalName}
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">{new Date(evidence.createdAt).toLocaleDateString("es-BO")}</td>
+                    <td className="px-4 py-3">
+                      {getStatusBadge(evidence.status)}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <Link href={`/admin/analisis/${evidence.id}`}>
+                        <Button size="sm" className="flex items-center gap-2">
+                          <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                          Analizar / Ver
+                        </Button>
+                      </Link>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {filteredEvidencias.map((ev) => (
-                    <tr key={ev.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
-                      <td className="p-4">
-                        <div className="flex items-center gap-3">
-                          <FileText className="w-4 h-4 text-muted-foreground" />
-                          <span className="text-sm font-medium truncate max-w-[200px]">
-                            {ev.originalName}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="p-4 text-sm">{ev.user?.name || "—"}</td>
-                      <td className="p-4 text-sm text-muted-foreground">{ev.user?.ci || "—"}</td>
-                      <td className="p-4">{getStatusBadge(ev.status)}</td>
-                      <td className="p-4">
-                        {ev.paymentVerified ? (
-                          <Badge variant="success">Verificado</Badge>
-                        ) : (
-                          <Badge variant="warning">Pendiente</Badge>
-                        )}
-                      </td>
-                      <td className="p-4 text-sm text-muted-foreground">
-                        {new Date(ev.createdAt).toLocaleDateString("es-BO")}
-                      </td>
-                      <td className="p-4 text-right">
-                        <Link href={`/admin/evidencias/${ev.id}`}>
-                          <Button variant="ghost" size="sm">
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex justify-center gap-2">
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-            <button
-              key={p}
-              onClick={() => setPage(p)}
-              className={`w-8 h-8 rounded-lg text-sm font-medium transition-all ${
-                page === p
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {p}
-            </button>
-          ))}
-        </div>
-      )}
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

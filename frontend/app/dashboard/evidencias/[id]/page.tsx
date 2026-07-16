@@ -11,6 +11,12 @@ import {
 import { Button } from "@/app/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/ui/card";
 import { Badge } from "@/app/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import Link from "next/link";
 
 export default function EvidenceDetailPage() {
@@ -20,6 +26,7 @@ export default function EvidenceDetailPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("resumen");
   const [copiedHash, setCopiedHash] = useState("");
+  const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
     fetchEvidence();
@@ -386,16 +393,10 @@ export default function EvidenceDetailPage() {
                             Descargar PDF
                           </Button>
                         </a>
-                        <a
-                          href={`/api/evidencias/${evidence.id}/certificado`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <Button size="sm">
-                            <Eye className="w-4 h-4" />
-                            Ver Certificado
-                          </Button>
-                        </a>
+                        <Button size="sm" onClick={() => setShowPreview(true)}>
+                          <Eye className="w-4 h-4" />
+                          Ver Certificado
+                        </Button>
                       </div>
                     </div>
                   </div>
@@ -405,6 +406,23 @@ export default function EvidenceDetailPage() {
           </div>
         )}
       </div>
+
+      {evidence?.certificate && (
+        <Dialog open={showPreview} onOpenChange={setShowPreview}>
+          <DialogContent className="max-w-4xl w-[90vw] h-[90vh] flex flex-col p-0 overflow-hidden">
+            <DialogHeader className="p-4 border-b">
+              <DialogTitle>Previsualización del Certificado</DialogTitle>
+            </DialogHeader>
+            <div className="flex-1 bg-muted/20 w-full h-full relative">
+              <iframe 
+                src={`/api/evidencias/${evidence.id}/certificado`}
+                className="w-full h-full border-0 absolute inset-0"
+                title="Certificado PDF"
+              />
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

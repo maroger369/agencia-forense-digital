@@ -46,9 +46,6 @@ export async function POST(
       );
     }
 
-    // Obtener analysta name
-    const analystName = evidence.analysis.analyst?.name || auth.name || "Sistema";
-
     // Generar hash único del certificado
     const hashData = `${evidence.id}-${evidence.userId}-${evidence.analysis.id}-${Date.now()}`;
     const certificateHash = crypto
@@ -56,79 +53,23 @@ export async function POST(
       .update(hashData)
       .digest("hex");
 
-    // Generar código QR con el hash
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
     const verificationUrl = `${baseUrl}/verificar/${certificateHash}`;
-    const qrCodeDataUrl = await QRCode.toDataURL(verificationUrl, {
-      width: 300,
-      margin: 2,
-      color: { dark: "#000000", light: "#ffffff" },
-    });
 
-    // Guardar QR como imagen
-    const qrDir = path.join(process.cwd(), "public", "certificados", "qr");
-    await mkdir(qrDir, { recursive: true });
-    const qrFileName = `${certificateHash.substring(0, 12)}.png`;
-    const qrPath = path.join(qrDir, qrFileName);
-
-    const qrBuffer = Buffer.from(
-      qrCodeDataUrl.replace(/^data:image\/png;base64,/, ""),
-      "base64"
-    );
-    await writeFile(qrPath, qrBuffer);
-
-    // Parsear datos para el PDF
-    const forensicReport = evidence.analysis.forensicReport
-      ? JSON.parse(evidence.analysis.forensicReport)
-      : {};
-
-    // Generar PDF del certificado
-    const pdfBuffer = await generarPDFCertificado({
-      certificateHash,
-      qrCodePath: `/certificados/qr/${qrFileName}`,
-      evidence: {
-        originalName: evidence.originalName,
-        createdAt: evidence.createdAt.toISOString(),
-        user: {
-          name: evidence.user.name,
-          ci: evidence.user.ci,
-          email: evidence.user.email,
-        },
-      },
-      analysis: {
-        elaScore: evidence.analysis.elaScore ?? 0,
-        elaResult: evidence.analysis.elaResult || "AUTENTICA",
-        forensicReport,
-        histogramData: evidence.analysis.histogramData ? JSON.parse(evidence.analysis.histogramData) : null,
-        exifData: evidence.analysis.exifData ? JSON.parse(evidence.analysis.exifData) : null,
-        hashesData: evidence.analysis.hashesData ? JSON.parse(evidence.analysis.hashesData) : null,
-        compressionData: evidence.analysis.compressionData ? JSON.parse(evidence.analysis.compressionData) : null,
-        noiseData: evidence.analysis.noiseData ? JSON.parse(evidence.analysis.noiseData) : null,
-      },
-      analystName,
-    });
-
-    // Guardar PDF
-    const pdfDir = path.join(process.cwd(), "public", "certificados", "pdfs");
-    await mkdir(pdfDir, { recursive: true });
-    const pdfFileName = `certificado-${certificateHash.substring(0, 12)}.pdf`;
-    const pdfFilePath = path.join(pdfDir, pdfFileName);
-    await writeFile(pdfFilePath, pdfBuffer);
-
-    // Guardar certificado en BD
+    // Guardar certificado en BD (sin rutas físicas)
     const certificate = await prisma.certificate.upsert({
       where: { evidenceId: id },
       create: {
         evidenceId: id,
         certificateHash,
-        qrCode: `/certificados/qr/${qrFileName}`,
-        pdfPath: `/certificados/pdfs/${pdfFileName}`,
+        qrCode: "", // Ya no se guarda en disco
+        pdfPath: "", // Ya no se guarda en disco
         generatedBy: auth.userId,
       },
       update: {
         certificateHash,
-        qrCode: `/certificados/qr/${qrFileName}`,
-        pdfPath: `/certificados/pdfs/${pdfFileName}`,
+        qrCode: "",
+        pdfPath: "",
         generatedBy: auth.userId,
       },
     });
@@ -145,7 +86,7 @@ export async function POST(
     return NextResponse.json({
       certificate,
       verificationUrl,
-      pdfUrl: `/certificados/pdfs/${pdfFileName}`,
+      pdfUrl: `/api/evidencias/${id}/certificado`,
       message: "Certificado generado exitosamente",
     });
   } catch (error) {
@@ -171,13 +112,26 @@ export async function GET(
 
     const evidence = await prisma.evidence.findUnique({
       where: { id },
-      include: { certificate: true },
+      include: { 
+        certificate: true,
+        user: true,
+        analysis: {
+          include: { analyst: { select: { name: true } } },
+        }
+      },
     });
 
-    if (!evidence || !evidence.certificate?.pdfPath) {
+    if (!evidence || !evidence.certificate) {
       return NextResponse.json(
         { error: "Certificado no disponible" },
         { status: 404 }
+      );
+    }
+
+    if (!evidence.analysis) {
+      return NextResponse.json(
+        { error: "La evidencia no tiene análisis completado" },
+        { status: 400 }
       );
     }
 
@@ -186,13 +140,52 @@ export async function GET(
       return NextResponse.json({ error: "No autorizado" }, { status: 403 });
     }
 
-    const pdfPath = path.join(process.cwd(), "public", evidence.certificate.pdfPath);
-    const pdfBuffer = await readFile(pdfPath);
+    // Generar código QR al vuelo
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+    const verificationUrl = `${baseUrl}/verificar/${evidence.certificate.certificateHash}`;
+    const qrCodeDataUrl = await QRCode.toDataURL(verificationUrl, {
+      width: 300,
+      margin: 2,
+      color: { dark: "#000000", light: "#ffffff" },
+    });
+    
+    // Parsear datos para el PDF
+    const forensicReport = evidence.analysis.forensicReport
+      ? JSON.parse(evidence.analysis.forensicReport)
+      : {};
 
-    return new NextResponse(pdfBuffer, {
+    const analystName = evidence.analysis.analyst?.name || "Sistema";
+
+    // Generar PDF del certificado en RAM
+    const pdfBuffer = await generarPDFCertificado({
+      certificateHash: evidence.certificate.certificateHash,
+      qrCodePath: "", // Ya no usado
+      evidence: {
+        originalName: evidence.originalName,
+        createdAt: evidence.createdAt.toISOString(),
+        user: {
+          name: evidence.user.name,
+          ci: evidence.user.ci,
+          email: evidence.user.email,
+        },
+      },
+      analysis: {
+        elaScore: evidence.analysis.elaScore ?? 0,
+        elaResult: evidence.analysis.elaResult || "AUTENTICA",
+        forensicReport,
+        histogramData: evidence.analysis.histogramData ? JSON.parse(evidence.analysis.histogramData) : null,
+        exifData: evidence.analysis.exifData ? JSON.parse(evidence.analysis.exifData) : null,
+        hashesData: evidence.analysis.hashesData ? JSON.parse(evidence.analysis.hashesData) : null,
+        compressionData: evidence.analysis.compressionData ? JSON.parse(evidence.analysis.compressionData) : null,
+        noiseData: evidence.analysis.noiseData ? JSON.parse(evidence.analysis.noiseData) : null,
+      },
+      analystName,
+    }, qrCodeDataUrl);
+
+    return new NextResponse(new Uint8Array(pdfBuffer), {
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="certificado-${evidence.certificate.certificateHash.substring(0, 12)}.pdf"`,
+        "Content-Disposition": `inline; filename="certificado-${evidence.certificate.certificateHash.substring(0, 12)}.pdf"`,
       },
     });
   } catch (error) {

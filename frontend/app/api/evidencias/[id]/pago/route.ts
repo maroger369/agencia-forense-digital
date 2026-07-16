@@ -70,7 +70,8 @@ export async function POST(
       where: { id },
       data: {
         paymentProofPath: `/pagos/${auth.userId}/${fileName}`,
-        paymentVerified: true,
+        paymentVerified: false,
+        status: "REVISANDO",
       },
     });
 
