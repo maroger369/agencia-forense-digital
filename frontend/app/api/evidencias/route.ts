@@ -98,24 +98,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Guardar imagen
-    const uploadsDir = path.join(process.cwd(), "public", "uploads", auth.userId);
-    await mkdir(uploadsDir, { recursive: true });
+    // Guardar imagen enviándola al backend
+    const baseUrl = process.env.NEXT_PUBLIC_FORENSIC_API_URL?.replace(/\/$/, "") || "http://localhost:8000";
+    const UPLOAD_API_URL = `${baseUrl}/upload`;
 
-    const timestamp = Date.now();
-    const ext = file.name.split(".").pop();
-    const fileName = `${timestamp}-${file.name}`;
-    const filePath = path.join(uploadsDir, fileName);
+    const backendFormData = new FormData();
+    backendFormData.append("file", file, file.name);
+    backendFormData.append("folder", `evidencias/${auth.userId}`);
 
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    await writeFile(filePath, buffer);
+    const uploadRes = await fetch(UPLOAD_API_URL, {
+      method: "POST",
+      body: backendFormData,
+    });
+
+    if (!uploadRes.ok) {
+      throw new Error(`Error al subir imagen al backend: ${uploadRes.status}`);
+    }
+
+    const uploadData = await uploadRes.json();
 
     // Crear evidencia
     const evidence = await prisma.evidence.create({
       data: {
         userId: auth.userId,
-        imagePath: `/uploads/${auth.userId}/${fileName}`,
+        imagePath: `${baseUrl}/uploads/${uploadData.filename}`, // URL absoluta para el frontend
         originalName: file.name,
         description,
         status: "PENDIENTE",

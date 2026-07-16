@@ -334,7 +334,7 @@ export default function AnalysisView() {
                     {evidence.analysis.elaImagePath && (
                       <div className="bg-muted/30 border border-border rounded-xl p-2">
                         <img
-                          src={`${process.env.NEXT_PUBLIC_FORENSIC_API_URL}/temp/${evidence.analysis.elaImagePath.split(/[/\\]/).pop()}`}
+                          src={`${(process.env.NEXT_PUBLIC_FORENSIC_API_URL || "").replace(/\/$/, "")}/temp/${evidence.analysis.elaImagePath.split(/[/\\\\]/).pop()}`}
                           alt="ELA Analysis"
                           className="w-full rounded-lg"
                           onError={(e) => {

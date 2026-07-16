@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pathlib import Path
@@ -43,7 +43,9 @@ UPLOAD_DIR = DATA_DIR / "uploads"
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 TEMP_DIR = DATA_DIR / "temp"
 TEMP_DIR.mkdir(parents=True, exist_ok=True)
+
 app.mount("/temp", StaticFiles(directory=str(TEMP_DIR)), name="temp")
+app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 
 
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".bmp", ".tiff", ".webp"}
@@ -54,26 +56,39 @@ def root():
     return {"message": "Image Forensic API", "status": "running"}
 
 
-@app.post("/analyze")
-async def analyze_image(file: UploadFile = File(...)):
-
-    print("📥 Imagen recibida:", file.filename)
-
+@app.post("/upload")
+async def upload_file(file: UploadFile = File(...), folder: str = Form("evidencias")):
     extension = Path(file.filename).suffix.lower()
 
     if extension not in ALLOWED_EXTENSIONS:
         raise HTTPException(status_code=400, detail="Formato de imagen no soportado.")
 
     filename = f"{uuid.uuid4()}{extension}"
-    filepath = UPLOAD_DIR / filename
+    target_dir = UPLOAD_DIR / folder
+    target_dir.mkdir(parents=True, exist_ok=True)
+    filepath = target_dir / filename
 
-    print("💾 Guardando temporalmente:", filepath)
+    print(f"💾 Guardando archivo permanentemente: {filepath}")
 
     with open(filepath, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    try:
+    return {
+        "url": f"/uploads/{folder}/{filename}",
+        "filename": f"{folder}/{filename}"
+    }
 
+
+@app.post("/analyze")
+async def analyze_image(filename: str = Form(...), original_name: str = Form(...)):
+
+    print(f"📥 Solicitud de análisis para: {filename}")
+    filepath = UPLOAD_DIR / filename
+
+    if not filepath.exists():
+        raise HTTPException(status_code=404, detail="El archivo especificado no existe.")
+
+    try:
         print("🔍 Iniciando análisis forense...")
 
         exif = analyze_exif(filepath)
@@ -96,7 +111,7 @@ async def analyze_image(file: UploadFile = File(...)):
 
         result = {
             "file": {
-                "original_name": file.filename,
+                "original_name": original_name,
                 "saved_name": filename,
                 "path": str(filepath),
             },
@@ -108,13 +123,9 @@ async def analyze_image(file: UploadFile = File(...)):
             "compression": compression,
         }
 
-        print("📊 Resultado final:")
-        print(result)
-
+        print("📊 Resultado final generado exitosamente.")
         return JSONResponse(result)
 
-    finally:
-
-        if os.path.exists(filepath):
-            os.remove(filepath)
-            print("🗑️ Archivo temporal eliminado")
+    except Exception as e:
+        print(f"❌ Error durante el análisis: {e}")
+        raise HTTPException(status_code=500, detail=f"Error interno en análisis: {str(e)}")

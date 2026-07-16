@@ -20,7 +20,7 @@ export default function AdminEvidenciasPage() {
       if (statusFilter !== "TODAS") {
         params.set("status", statusFilter);
       }
-      const res = await fetch(`/api/admin/evidencias?${params}`);
+      const res = await fetch(`/api/evidencias?${params}`);
       if (res.ok) {
         const data = await res.json();
         setEvidencias(data.evidencias || []);

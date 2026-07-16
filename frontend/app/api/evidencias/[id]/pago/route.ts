@@ -48,28 +48,30 @@ export async function POST(
       );
     }
 
-    // Guardar comprobante
-    const paymentDir = path.join(
-      process.cwd(),
-      "public",
-      "pagos",
-      auth.userId
-    );
-    await mkdir(paymentDir, { recursive: true });
+    // Guardar comprobante enviándolo al backend
+    const baseUrl = process.env.NEXT_PUBLIC_FORENSIC_API_URL?.replace(/\/$/, "") || "http://localhost:8000";
+    const UPLOAD_API_URL = `${baseUrl}/upload`;
 
-    const timestamp = Date.now();
-    const fileName = `pago-${timestamp}-${paymentFile.name}`;
-    const filePath = path.join(paymentDir, fileName);
+    const backendFormData = new FormData();
+    backendFormData.append("file", paymentFile, paymentFile.name);
+    backendFormData.append("folder", `pagos/${auth.userId}`);
 
-    const bytes = await paymentFile.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    await writeFile(filePath, buffer);
+    const uploadRes = await fetch(UPLOAD_API_URL, {
+      method: "POST",
+      body: backendFormData,
+    });
+
+    if (!uploadRes.ok) {
+      throw new Error(`Error al subir comprobante al backend: ${uploadRes.status}`);
+    }
+
+    const uploadData = await uploadRes.json();
 
     // Actualizar evidencia con comprobante
     await prisma.evidence.update({
       where: { id },
       data: {
-        paymentProofPath: `/pagos/${auth.userId}/${fileName}`,
+        paymentProofPath: `${baseUrl}/uploads/${uploadData.filename}`, // URL absoluta para el frontend
         paymentVerified: false,
         status: "REVISANDO",
       },

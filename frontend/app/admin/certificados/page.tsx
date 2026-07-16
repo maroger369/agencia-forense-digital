@@ -20,7 +20,7 @@ export default function CertificadosPage() {
   useEffect(() => {
     const fetchEvidencias = async () => {
       try {
-        const res = await fetch("/api/admin/evidencias");
+        const res = await fetch("/api/evidencias");
         if (res.ok) {
           const data = await res.json();
           // Filter only evidences that have a certificate

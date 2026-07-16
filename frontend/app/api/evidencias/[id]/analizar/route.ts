@@ -4,7 +4,8 @@ import { getUserFromRequest } from "@/app/lib/auth";
 import { readFile } from "fs/promises";
 import path from "path";
 
-const FORENSIC_API_URL = `${process.env.NEXT_PUBLIC_FORENSIC_API_URL}/analyze`;
+const baseUrl = process.env.NEXT_PUBLIC_FORENSIC_API_URL?.replace(/\/$/, "") || "http://localhost:8000";
+const FORENSIC_API_URL = `${baseUrl}/analyze`;
 
 export async function POST(
   request: NextRequest,
@@ -38,16 +39,16 @@ export async function POST(
       data: { status: "REVISANDO" },
     });
 
-    // Leer imagen del disco
-    const imagePath = path.join(process.cwd(), "public", evidence.imagePath);
-    const imageBuffer = await readFile(imagePath);
-    const ext = path.extname(evidence.originalName).toLowerCase();
-    const mimeType = ext === ".png" ? "image/png" : ext === ".webp" ? "image/webp" : "image/jpeg";
+    // Extraer el filename de la ruta de imagen almacenada (que ahora es una URL absoluta)
+    // evidence.imagePath será algo como "http://backend/uploads/evidencias/user/archivo.jpg"
+    const filename = evidence.imagePath.includes("/uploads/") 
+      ? evidence.imagePath.split("/uploads/")[1] 
+      : evidence.imagePath;
 
     // Llamar a la API forense externa
     const formData = new FormData();
-    const blob = new Blob([imageBuffer], { type: mimeType });
-    formData.append("file", blob, evidence.originalName);
+    formData.append("filename", filename);
+    formData.append("original_name", evidence.originalName);
 
     let forensicResult;
     try {
