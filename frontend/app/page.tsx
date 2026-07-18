@@ -1,6 +1,6 @@
 "use client";
 
-import { Shield, CheckCircle2, FileText, QrCode, ArrowRight, Scale, MapPin, Building2, ChevronRight, Lock, Zap, Moon, Sun } from "lucide-react";
+import { Shield, CheckCircle2, FileText, QrCode, ArrowRight, Scale, MapPin, Building2, ChevronRight, Lock, Zap, Moon, Sun, Menu, X } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import Link from "next/link";
 import Image from "next/image";
@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 export default function LandingPage() {
   const { theme, setTheme } = useTheme();
   const [user, setUser] = useState<any>(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -48,7 +49,7 @@ export default function LandingPage() {
               Agencia Forense Digital
             </span>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             <Button
               variant="ghost"
               size="icon"
@@ -60,33 +61,71 @@ export default function LandingPage() {
               <span className="sr-only">Toggle theme</span>
             </Button>
             
+            <div className="flex items-center gap-2 sm:gap-4">
+              {user ? (
+                <Link href={dashboardPath}>
+                  <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 transition-all font-medium px-4">
+                    Ir al Panel
+                  </Button>
+                </Link>
+              ) : (
+                <>
+                  <Link href="/auth/login" className="hidden md:block">
+                    <Button variant="ghost" size="sm" className="font-medium hover:bg-muted/50 transition-colors">
+                      Iniciar Sesión
+                    </Button>
+                  </Link>
+                  <Link href="/auth/register">
+                    <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 transition-all font-medium px-4">
+                      <span className="hidden md:inline">Acceder al Portal</span>
+                      <span className="md:hidden">Comenzar</span>
+                    </Button>
+                  </Link>
+                </>
+              )}
+            </div>
+
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="md:hidden w-9 h-9"
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+            >
+              {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </Button>
+          </div>
+        </div>
+
+        {/* Mobile Menu */}
+        {isMenuOpen && (
+          <div className="md:hidden border-t border-border/50 bg-background/95 backdrop-blur-xl absolute top-16 left-0 w-full p-4 flex flex-col gap-3 shadow-xl animate-fade-in">
             {user ? (
-              <Link href={dashboardPath}>
-                <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 transition-all font-medium">
+              <Link href={dashboardPath} onClick={() => setIsMenuOpen(false)}>
+                <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20">
                   Ir al Panel
                 </Button>
               </Link>
             ) : (
               <>
-                <Link href="/auth/login" className="hidden sm:block">
-                  <Button variant="ghost" size="sm" className="font-medium hover:bg-muted/50 transition-colors">
+                <Link href="/auth/login" onClick={() => setIsMenuOpen(false)}>
+                  <Button variant="outline" className="w-full">
                     Iniciar Sesión
                   </Button>
                 </Link>
-                <Link href="/auth/register">
-                  <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 transition-all font-medium">
+                <Link href="/auth/register" onClick={() => setIsMenuOpen(false)}>
+                  <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20">
                     Acceder al Portal
                   </Button>
                 </Link>
               </>
             )}
           </div>
-        </div>
+        )}
       </nav>
 
       <main className="relative z-10">
         {/* Hero Section */}
-        <section className="relative pt-24 pb-32 md:pt-36 md:pb-40 overflow-hidden">
+        <section className="relative pt-16 pb-20 md:pt-36 md:pb-40 overflow-hidden">
           <div className="max-w-7xl mx-auto px-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
               <div className="max-w-2xl">
@@ -98,7 +137,7 @@ export default function LandingPage() {
                   Sistema Inteligente Activo en Cochabamba
                 </div>
                 
-                <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-6 leading-[1.1] animate-fade-in-up" style={{ animationDelay: '100ms' }}>
+                <h1 className="text-4xl sm:text-5xl md:text-7xl font-extrabold tracking-tight mb-6 leading-[1.1] animate-fade-in-up" style={{ animationDelay: '100ms' }}>
                   Auditoría Forense <br/>
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-blue-500">
                     Digital de Alta Precisión
@@ -216,7 +255,7 @@ export default function LandingPage() {
           <div className="max-w-7xl mx-auto px-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
               <div>
-                <h2 className="text-3xl md:text-5xl font-bold mb-8 tracking-tight">
+                <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold mb-8 tracking-tight">
                   Proceso Transparente y 
                   <span className="text-emerald-500 block">Auditable</span>
                 </h2>

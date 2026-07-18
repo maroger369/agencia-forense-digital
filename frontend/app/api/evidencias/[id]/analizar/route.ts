@@ -4,7 +4,7 @@ import { getUserFromRequest } from "@/app/lib/auth";
 import { readFile } from "fs/promises";
 import path from "path";
 
-const baseUrl = process.env.NEXT_PUBLIC_FORENSIC_API_URL?.replace(/\/$/, "") || "http://localhost:8000";
+const baseUrl = process.env.NEXT_PUBLIC_FORENSIC_API_URL?.replace(/\/$/, "") || "https://api-python-forense.onrender.com";
 const FORENSIC_API_URL = `${baseUrl}/analyze`;
 
 export async function POST(
@@ -30,6 +30,13 @@ export async function POST(
       return NextResponse.json(
         { error: "Evidencia no encontrada" },
         { status: 404 }
+      );
+    }
+
+    if (!evidence.imagePath) {
+      return NextResponse.json(
+        { error: "No se encontró una imagen para analizar en esta evidencia." },
+        { status: 400 }
       );
     }
 
@@ -66,7 +73,7 @@ export async function POST(
     } catch (apiError) {
       console.error("⚠️ Error al conectar con API forense externa:", apiError);
       return NextResponse.json(
-        { error: `No se pudo conectar con el servidor de análisis forense. Verifica que la API esté configurada en ${process.env.NEXT_PUBLIC_FORENSIC_API_URL}` },
+        { error: `No se pudo conectar con el servidor de análisis forense. Verifica que la API esté configurada en https://api-python-forense.onrender.com/` },
         { status: 503 }
       );
     }
@@ -116,9 +123,9 @@ export async function POST(
 }
 
 function generarDictamen(result: any, evidence: any): string {
-  const manipulacion = result.ela?.possible_manipulation;
-  const score = result.ela?.score || 0;
-  const nivelRiesgo = score > 0.5 ? "ALTO" : score > 0.2 ? "MEDIO" : "BAJO";
+  const manipulacion = result.ela?.possible_manipulation || false;
+  const score = result.ela?.score || 0; // Ahora viene como porcentaje de 0 a 100
+  const nivelRiesgo = score > 50 ? "ALTO" : score > 18 ? "MEDIO" : "BAJO";
 
   const detallesCamara = result.exif?.camera;
   const tieneCamara = detallesCamara?.make || detallesCamara?.model;
@@ -126,8 +133,8 @@ function generarDictamen(result: any, evidence: any): string {
   const tieneSoftware = result.exif?.software?.software || result.exif?.software?.creator_tool;
 
   const resumenManipulacion = manipulacion
-    ? `El análisis ELA (Error Level Analysis) reveló un score de ${score.toFixed(4)}, superando el umbral de 0.2, lo que sugiere POSIBLE MANIPULACIÓN en la imagen. Se detectaron anomalías en los patrones de compresión que indican posibles alteraciones en áreas específicas de la imagen.`
-    : `El análisis ELA (Error Level Analysis) muestra un score de ${score.toFixed(4)}, dentro del rango normal, lo que indica que la imagen NO PRESENTA EVIDENCIAS de manipulación. Los patrones de compresión son consistentes en toda la imagen.`;
+    ? `El análisis ELA (Error Level Analysis) reveló un score de ${score.toFixed(2)}%, superando el umbral normal, lo que sugiere POSIBLE MANIPULACIÓN en la imagen. Se detectaron anomalías en los patrones de compresión que indican posibles alteraciones en áreas específicas de la imagen.`
+    : `El análisis ELA (Error Level Analysis) muestra un score de ${score.toFixed(2)}%, dentro del rango normal, lo que indica que la imagen NO PRESENTA EVIDENCIAS de manipulación. Los patrones de compresión son consistentes en toda la imagen.`;
 
   return JSON.stringify({
     veredicto: manipulacion
@@ -168,7 +175,7 @@ function generarDictamen(result: any, evidence: any): string {
       ruidoMedio: result.noise?.noise?.mean ?? "No disponible",
       brillo: result.histogram?.brightness?.toFixed(2) || "No disponible",
       contraste: result.histogram?.contrast?.toFixed(2) || "No disponible",
-      scoreELA: score.toFixed(4),
+      scoreELA: `${score.toFixed(2)}%`,
     },
     hashes: {
       md5: result.hashes?.cryptographic?.md5 || result.hashes?.cryptographic?.MD5 || "",

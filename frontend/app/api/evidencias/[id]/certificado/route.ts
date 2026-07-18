@@ -53,7 +53,7 @@ export async function POST(
       .update(hashData)
       .digest("hex");
 
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || new URL(request.url).origin;
     const verificationUrl = `${baseUrl}/verificar/${certificateHash}`;
 
     // Guardar certificado en BD (sin rutas físicas)
@@ -141,7 +141,7 @@ export async function GET(
     }
 
     // Generar código QR al vuelo
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || new URL(request.url).origin;
     const verificationUrl = `${baseUrl}/verificar/${evidence.certificate.certificateHash}`;
     const qrCodeDataUrl = await QRCode.toDataURL(verificationUrl, {
       width: 300,

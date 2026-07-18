@@ -58,8 +58,8 @@ export default function EvidenceDetailPage() {
   };
 
   const getRiskLevel = (score: number) => {
-    if (score > 0.5) return { level: "ALTO", color: "text-red-400", bg: "bg-red-500/20" };
-    if (score > 0.2) return { level: "MEDIO", color: "text-amber-400", bg: "bg-amber-500/20" };
+    if (score > 50) return { level: "ALTO", color: "text-red-400", bg: "bg-red-500/20" };
+    if (score > 18) return { level: "MEDIO", color: "text-amber-400", bg: "bg-amber-500/20" };
     return { level: "BAJO", color: "text-emerald-400", bg: "bg-emerald-500/20" };
   };
 
@@ -250,7 +250,11 @@ export default function EvidenceDetailPage() {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="bg-muted/50 p-4 rounded-xl">
                       <p className="text-xs text-muted-foreground">Score ELA</p>
-                      <p className="text-2xl font-bold">{evidence.analysis.elaScore}</p>
+                      <p className="text-2xl font-bold">
+                        {evidence.analysis.elaScore !== null && evidence.analysis.elaScore !== undefined 
+                          ? `${Number(evidence.analysis.elaScore).toFixed(2)}%` 
+                          : "N/A"}
+                      </p>
                     </div>
                     <div className="bg-muted/50 p-4 rounded-xl">
                       <p className="text-xs text-muted-foreground">Nivel de Riesgo</p>

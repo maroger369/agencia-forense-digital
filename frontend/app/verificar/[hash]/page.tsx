@@ -187,7 +187,11 @@ export default function VerifyCertificatePage() {
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     <div className="bg-muted/50 p-4 rounded-xl">
                       <p className="text-xs text-muted-foreground">Score ELA</p>
-                      <p className="text-2xl font-bold">{result.analisis.scoreELA}</p>
+                      <p className="text-2xl font-bold">
+                        {result.analisis.scoreELA !== null && result.analisis.scoreELA !== undefined
+                          ? `${Number(result.analisis.scoreELA).toFixed(2)}%`
+                          : "N/A"}
+                      </p>
                     </div>
                     <div className="bg-muted/50 p-4 rounded-xl">
                       <p className="text-xs text-muted-foreground">Resultado</p>

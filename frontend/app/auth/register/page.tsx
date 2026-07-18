@@ -2,82 +2,84 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Shield, Eye, EyeOff, UserPlus } from "lucide-react";
+import { Eye, EyeOff, UserPlus } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/app/components/ui/card";
 import Link from "next/link";
+import Image from "next/image";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+
+const registerSchema = z
+  .object({
+    name: z.string().min(2, "El nombre es obligatorio"),
+    ci: z.string().min(5, "El CI es obligatorio"),
+    email: z.string().email("Correo electrónico inválido"),
+    phone: z.string().optional(),
+    password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres"),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Las contraseñas no coinciden",
+    path: ["confirmPassword"],
+  });
+
+type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-    ci: "",
-    phone: "",
-  });
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [serverError, setServerError] = useState("");
 
-  const handleChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm((prev) => ({ ...prev, [field]: e.target.value }));
-  };
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<RegisterFormValues>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+      ci: "",
+      phone: "",
+    },
+  });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-
-    const { name, email, password, confirmPassword, ci, phone } = form;
-
-    if (!name || !email || !password || !ci) {
-      setError("Todos los campos marcados con * son obligatorios");
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setError("Las contraseñas no coinciden");
-      return;
-    }
-
-    if (password.length < 6) {
-      setError("La contraseña debe tener al menos 6 caracteres");
-      return;
-    }
+  const onSubmit = async (data: RegisterFormValues) => {
+    setServerError("");
 
     try {
-      setLoading(true);
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password, ci, phone }),
+        body: JSON.stringify(data),
       });
 
-      const data = await res.json();
+      const responseData = await res.json();
 
       if (!res.ok) {
-        setError(data.error || "Error al registrarse");
+        setServerError(responseData.error || "Error al registrarse");
         return;
       }
 
       router.push("/dashboard");
     } catch {
-      setError("Error de conexión. Intenta de nuevo.");
-    } finally {
-      setLoading(false);
+      setServerError("Error de conexión. Intenta de nuevo.");
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4 sm:p-8">
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-forensic-purple/5 pointer-events-none" />
       
-      <div className="animate-fade-in w-full max-w-lg relative">
+      <div className="animate-fade-in w-full max-w-lg relative mt-8 sm:mt-0 mb-8 sm:mb-0">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center p-2 rounded-2xl shadow-lg mb-4 bg-white/5">
-            <img src="/logo/logo-afd.png" alt="AFD Logo" className="w-16 h-16 object-contain" />
+            <Image src="/logo/logo-afd.png" alt="AFD Logo" width={64} height={64} className="w-16 h-16 object-contain" priority />
           </div>
           <h1 className="text-2xl font-bold">Crear Cuenta</h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -93,21 +95,23 @@ export default function RegisterPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Input
                   id="name"
                   label="Nombre Completo *"
                   placeholder="Juan Pérez"
-                  value={form.name}
-                  onChange={handleChange("name")}
+                  error={errors.name?.message}
+                  disabled={isSubmitting}
+                  {...register("name")}
                 />
                 <Input
                   id="ci"
                   label="Cédula de Identidad *"
                   placeholder="1234567"
-                  value={form.ci}
-                  onChange={handleChange("ci")}
+                  error={errors.ci?.message}
+                  disabled={isSubmitting}
+                  {...register("ci")}
                 />
               </div>
 
@@ -116,8 +120,9 @@ export default function RegisterPage() {
                 label="Correo Electrónico *"
                 type="email"
                 placeholder="correo@ejemplo.com"
-                value={form.email}
-                onChange={handleChange("email")}
+                error={errors.email?.message}
+                disabled={isSubmitting}
+                {...register("email")}
               />
 
               <Input
@@ -125,8 +130,9 @@ export default function RegisterPage() {
                 label="Teléfono"
                 type="tel"
                 placeholder="+591 71234567"
-                value={form.phone}
-                onChange={handleChange("phone")}
+                error={errors.phone?.message}
+                disabled={isSubmitting}
+                {...register("phone")}
               />
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -136,8 +142,9 @@ export default function RegisterPage() {
                     label="Contraseña *"
                     type={showPassword ? "text" : "password"}
                     placeholder="Mín. 6 caracteres"
-                    value={form.password}
-                    onChange={handleChange("password")}
+                    error={errors.password?.message}
+                    disabled={isSubmitting}
+                    {...register("password")}
                   />
                 </div>
                 <Input
@@ -145,8 +152,9 @@ export default function RegisterPage() {
                   label="Confirmar Contraseña *"
                   type={showPassword ? "text" : "password"}
                   placeholder="Repite la contraseña"
-                  value={form.confirmPassword}
-                  onChange={handleChange("confirmPassword")}
+                  error={errors.confirmPassword?.message}
+                  disabled={isSubmitting}
+                  {...register("confirmPassword")}
                 />
               </div>
 
@@ -165,14 +173,14 @@ export default function RegisterPage() {
                 </button>
               </div>
 
-              {error && (
+              {serverError && (
                 <div className="p-3 rounded-xl bg-destructive/10 border border-destructive/30 text-destructive text-sm text-center">
-                  {error}
+                  {serverError}
                 </div>
               )}
 
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? (
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                     Creando cuenta...

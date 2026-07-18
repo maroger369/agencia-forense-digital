@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { cookies } from "next/headers";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
 
@@ -41,6 +42,17 @@ export function getUserFromRequest(request: NextRequest): JWTPayload | null {
   const token = getTokenFromRequest(request);
   if (!token) return null;
   return verifyToken(token);
+}
+
+export async function getServerUser(): Promise<JWTPayload | null> {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("token")?.value;
+    if (!token) return null;
+    return verifyToken(token);
+  } catch (error) {
+    return null;
+  }
 }
 
 export function setAuthCookie(response: Response, token: string): void {

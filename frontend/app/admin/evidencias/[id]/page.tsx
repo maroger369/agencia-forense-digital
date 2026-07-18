@@ -18,6 +18,18 @@ export default function AdminEvidenceDetailPage() {
   const [evidence, setEvidence] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
+  const [activeTab, setActiveTab] = useState("resumen");
+
+  let reportData: any = null;
+  if (evidence?.analysis?.forensicReport) {
+    try {
+      reportData = typeof evidence.analysis.forensicReport === "string"
+        ? JSON.parse(evidence.analysis.forensicReport)
+        : evidence.analysis.forensicReport;
+    } catch (e) {
+      console.error("Error parsing forensic report:", e);
+    }
+  }
 
   useEffect(() => {
     fetchEvidence();
@@ -220,7 +232,7 @@ export default function AdminEvidenceDetailPage() {
 
       {/* Analysis Results */}
       {evidence.analysis && (
-        <Card className="border-forensic-blue/30">
+        <Card className="border-forensic-blue/30 mt-6">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Shield className="w-5 h-5 text-primary" />
@@ -231,7 +243,11 @@ export default function AdminEvidenceDetailPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
               <div className="bg-muted/50 p-4 rounded-xl">
                 <p className="text-xs text-muted-foreground">Score ELA</p>
-                <p className="text-2xl font-bold">{evidence.analysis.elaScore}</p>
+                <p className="text-2xl font-bold">
+                  {evidence.analysis.elaScore !== null && evidence.analysis.elaScore !== undefined
+                    ? `${Number(evidence.analysis.elaScore).toFixed(2)}%`
+                    : "N/A"}
+                </p>
               </div>
               <div className="bg-muted/50 p-4 rounded-xl">
                 <p className="text-xs text-muted-foreground">Resultado</p>
@@ -249,8 +265,120 @@ export default function AdminEvidenceDetailPage() {
               </div>
             </div>
 
+            {reportData && (
+              <div className="mt-8 space-y-6 mb-8">
+                <div className="flex border-b overflow-x-auto">
+                  <button
+                    onClick={() => setActiveTab("resumen")}
+                    className={`whitespace-nowrap pb-2 px-4 text-sm font-medium transition-colors ${activeTab === "resumen" ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground"}`}
+                  >
+                    Resumen Técnico
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("parametros")}
+                    className={`whitespace-nowrap pb-2 px-4 text-sm font-medium transition-colors ${activeTab === "parametros" ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground"}`}
+                  >
+                    Parámetros y Metadatos
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("explicacion")}
+                    className={`whitespace-nowrap pb-2 px-4 text-sm font-medium transition-colors ${activeTab === "explicacion" ? "border-b-2 border-primary text-primary" : "text-muted-foreground hover:text-foreground"}`}
+                  >
+                    Explicación de Evaluación
+                  </button>
+                </div>
+
+                {activeTab === "resumen" && (
+                  <div className="space-y-4 animate-fade-in">
+                    <div className="bg-muted/30 p-4 rounded-xl border border-muted">
+                      <h3 className="font-semibold text-sm mb-2 flex items-center gap-2"><FileText className="w-4 h-4 text-primary" /> Dictamen</h3>
+                      <p className="text-sm text-muted-foreground leading-relaxed">{reportData.resumen}</p>
+                    </div>
+                    <div className="bg-muted/30 p-4 rounded-xl border border-muted">
+                      <h3 className="font-semibold text-sm mb-2 flex items-center gap-2"><AlertTriangle className="w-4 h-4 text-primary" /> Recomendación</h3>
+                      <p className="text-sm text-muted-foreground leading-relaxed">{reportData.recomendacion}</p>
+                    </div>
+                    
+                    <div className="bg-muted/30 p-4 rounded-xl border border-muted">
+                       <h3 className="font-semibold text-sm mb-3 flex items-center gap-2"><Shield className="w-4 h-4 text-primary" /> Huellas Digitales (Hashes)</h3>
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                         {Object.entries(reportData.hashes || {}).map(([key, val]) => val ? (
+                           <div key={key} className="flex flex-col">
+                             <span className="text-xs font-semibold text-muted-foreground uppercase">{key}</span>
+                             <span className="text-xs font-mono bg-background p-1.5 rounded border mt-1 truncate" title={val as string}>{val as string}</span>
+                           </div>
+                         ) : null)}
+                       </div>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === "parametros" && (
+                  <div className="space-y-4 animate-fade-in">
+                    <h3 className="font-semibold text-sm mb-2 flex items-center gap-2"><Zap className="w-4 h-4 text-primary" /> Detalles Técnicos Extraídos</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {Object.entries(reportData.detalles || {}).map(([key, val]) => (
+                        <div key={key} className="bg-muted/30 p-3 rounded-xl border border-muted">
+                          <p className="text-xs text-muted-foreground capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</p>
+                          <p className="text-sm font-medium mt-1 truncate" title={val as string}>{val as string}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === "explicacion" && (
+                  <div className="space-y-6 animate-fade-in">
+                    <div className="bg-muted/20 p-5 rounded-xl border border-muted space-y-3">
+                      <h4 className="font-bold text-primary flex items-center gap-2">
+                        <Activity className="w-5 h-5" /> 
+                        ¿Qué es el Análisis ELA (Error Level Analysis)?
+                      </h4>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        El <strong>Error Level Analysis (ELA)</strong> es una técnica de análisis forense digital que identifica áreas dentro de una imagen que se encuentran en diferentes niveles de compresión. En las imágenes JPEG, toda la imagen debería estar aproximadamente al mismo nivel de error. Si una sección de la imagen está a un nivel de error significativamente diferente (mostrándose más brillante o con colores intensos en la vista ELA), probablemente indica una modificación digital (como un montaje o una alteración reciente).
+                      </p>
+                      <ul className="text-sm text-muted-foreground list-disc list-inside ml-2">
+                        <li><strong>Score &lt; 18%:</strong> Considerado normal. La compresión es uniforme a lo largo de la imagen.</li>
+                        <li><strong>Score 18% - 50%:</strong> Nivel medio. Puede indicar múltiples guardados o alteraciones menores en ciertas regiones.</li>
+                        <li><strong>Score &gt; 50%:</strong> Nivel alto. Alta probabilidad de manipulación o empalme de imágenes de distintas fuentes.</li>
+                      </ul>
+                    </div>
+
+                    <div className="bg-muted/20 p-5 rounded-xl border border-muted space-y-3">
+                      <h4 className="font-bold text-primary flex items-center gap-2">
+                        <ImageIcon className="w-5 h-5" /> 
+                        Metadatos EXIF y Análisis de Ruido
+                      </h4>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        Los metadatos <strong>EXIF (Exchangeable Image File Format)</strong> son datos incrustados en la imagen por la cámara en el momento de la captura. Proveen información sobre el dispositivo, exposición, fecha y si se utilizó software de edición.
+                      </p>
+                      <ul className="text-sm text-muted-foreground list-disc list-inside ml-2">
+                        <li><strong>Software:</strong> Si este campo muestra nombres como "Adobe Photoshop" o "GIMP", confirma que la imagen pasó por un programa de edición después de su captura.</li>
+                        <li><strong>Ausencia de EXIF:</strong> La falta de información de la cámara en fotos que parecen reales sugiere que los metadatos fueron eliminados (stripping) intencionalmente o la imagen proviene de redes sociales, las cuales suelen limpiar estos datos.</li>
+                        <li><strong>Ruido y Nitidez:</strong> El análisis de la varianza del ruido puede revelar zonas "demasiado suaves" o "anormalmente nítidas", lo que evidencia el uso de pinceles de clonado, herramientas de desenfoque o manipulación localizada.</li>
+                      </ul>
+                    </div>
+
+                    <div className="bg-muted/20 p-5 rounded-xl border border-muted space-y-3">
+                      <h4 className="font-bold text-primary flex items-center gap-2">
+                        <FileText className="w-5 h-5" /> 
+                        Hashes Criptográficos y Perceptuales
+                      </h4>
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        Los hashes son firmas digitales únicas generadas a partir de la imagen. Sirven para verificar su integridad y buscar similitudes.
+                      </p>
+                      <ul className="text-sm text-muted-foreground list-disc list-inside ml-2">
+                        <li><strong>Hashes Criptográficos (MD5, SHA-256):</strong> Cambian completamente si se altera un solo píxel de la imagen. Se utilizan para garantizar que la evidencia no ha sido modificada desde su adquisición.</li>
+                        <li><strong>Hashes Perceptuales (pHash, dHash):</strong> Analizan la estructura visual de la imagen. Si dos imágenes tienen hashes perceptuales muy similares, significa que visualmente son casi idénticas, incluso si una de ellas ha sido redimensionada o comprimida.</li>
+                      </ul>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {evidence.certificate && (
-              <div className="flex items-center gap-4 p-4 rounded-xl bg-forensic-gold/10 border border-forensic-gold/30">
+              <div className="flex items-center gap-4 p-4 rounded-xl bg-forensic-gold/10 border border-forensic-gold/30 pt-4">
                 <QrCode className="w-10 h-10 text-forensic-gold" />
                 <div className="flex-1">
                   <p className="font-medium">Certificado Generado</p>

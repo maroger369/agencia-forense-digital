@@ -11,44 +11,49 @@ def analyze_compression(filepath: Path) -> dict:
     La calidad JPEG original no puede recuperarse exactamente una vez
     que la imagen ha sido guardada. Solo puede estimarse.
     """
+    try:
+        image = Image.open(filepath)
 
-    image = Image.open(filepath)
+        result = {
+            "success": True,
+            "format": image.format,
+            "mode": image.mode,
+            "size_bytes": os.path.getsize(filepath),
+            "compression": {},
+        }
 
-    result = {
-        "success": True,
-        "format": image.format,
-        "mode": image.mode,
-        "size_bytes": os.path.getsize(filepath),
-        "compression": {},
-    }
+        # PNG, TIFF, etc.
+        compression = image.info.get("compression")
+        if compression:
+            result["compression"]["method"] = compression
 
-    # PNG, TIFF, etc.
-    compression = image.info.get("compression")
-    if compression:
-        result["compression"]["method"] = compression
+        # JPEG
+        if image.format == "JPEG":
 
-    # JPEG
-    if image.format == "JPEG":
+            result["compression"]["progressive"] = bool(
+                image.info.get("progressive", False)
+            )
 
-        result["compression"]["progressive"] = bool(
-            image.info.get("progressive", False)
-        )
+            result["compression"]["optimize"] = bool(image.info.get("optimize", False))
 
-        result["compression"]["optimize"] = bool(image.info.get("optimize", False))
+            result["compression"]["jfif"] = image.info.get("jfif")
 
-        result["compression"]["jfif"] = image.info.get("jfif")
+            result["compression"]["jfif_version"] = image.info.get("jfif_version")
 
-        result["compression"]["jfif_version"] = image.info.get("jfif_version")
+            result["compression"]["dpi"] = image.info.get("dpi")
 
-        result["compression"]["dpi"] = image.info.get("dpi")
+            result["compression"]["subsampling"] = (
+                image.layer if hasattr(image, "layer") else None
+            )
 
-        result["compression"]["subsampling"] = (
-            image.layer if hasattr(image, "layer") else None
-        )
+            result["compression"]["quality_estimation"] = (
+                "No es posible determinar la calidad JPEG exacta "
+                "a partir de una imagen ya guardada."
+            )
 
-        result["compression"]["quality_estimation"] = (
-            "No es posible determinar la calidad JPEG exacta "
-            "a partir de una imagen ya guardada."
-        )
-
-    return result
+        return result
+    except Exception as e:
+        return {
+            "success": False,
+            "error": f"Error al analizar compresión: {str(e)}"
+        }

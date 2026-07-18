@@ -127,8 +127,8 @@ export default function AnalysisView() {
   }
 
   const getRiskLevel = (score: number) => {
-    if (score > 0.5) return { level: "ALTO", variant: "destructive" as const };
-    if (score > 0.2) return { level: "MEDIO", variant: "default" as const };
+    if (score > 50) return { level: "ALTO", variant: "destructive" as const };
+    if (score > 18) return { level: "MEDIO", variant: "default" as const };
     return { level: "BAJO", variant: "secondary" as const };
   };
 
@@ -281,7 +281,7 @@ export default function AnalysisView() {
                     </div>
                     <div className="bg-muted/30 border border-border/50 p-4 rounded-xl flex flex-col gap-1">
                       <p className="text-xs text-muted-foreground">Score ELA</p>
-                      <p className="text-2xl font-bold">{(evidence.analysis.elaScore || 0).toFixed(4)}</p>
+                      <p className="text-2xl font-bold">{(evidence.analysis.elaScore || 0).toFixed(2)}%</p>
                     </div>
                     <div className="bg-muted/30 border border-border/50 p-4 rounded-xl flex flex-col gap-1">
                       <p className="text-xs text-muted-foreground">Brillo Medio</p>
@@ -351,7 +351,7 @@ export default function AnalysisView() {
                       </div>
                       <div className="bg-muted/30 border border-border/50 p-4 rounded-xl flex flex-col gap-1">
                         <p className="text-xs text-muted-foreground">Score Diferencial</p>
-                        <p className="text-lg font-bold">{(evidence.analysis.elaScore || 0).toFixed(4)}</p>
+                        <p className="text-lg font-bold">{(evidence.analysis.elaScore || 0).toFixed(2)}%</p>
                       </div>
                     </div>
 

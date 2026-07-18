@@ -30,22 +30,28 @@ def analyze_hashes(filepath: Path) -> dict:
     """
     Calcula hashes criptográficos y perceptuales.
     """
+    try:
+        image = Image.open(filepath)
 
-    image = Image.open(filepath)
+        result = {
+            "success": True,
+            "cryptographic": {
+                "md5": calculate_hash(filepath, "md5"),
+                "sha1": calculate_hash(filepath, "sha1"),
+                "sha256": calculate_hash(filepath, "sha256"),
+                "sha512": calculate_hash(filepath, "sha512"),
+            },
+            "perceptual": {
+                "average_hash": str(imagehash.average_hash(image)),
+                "phash": str(imagehash.phash(image)),
+                "dhash": str(imagehash.dhash(image)),
+                "whash": str(imagehash.whash(image)),
+            },
+        }
 
-    result = {
-        "cryptographic": {
-            "md5": calculate_hash(filepath, "md5"),
-            "sha1": calculate_hash(filepath, "sha1"),
-            "sha256": calculate_hash(filepath, "sha256"),
-            "sha512": calculate_hash(filepath, "sha512"),
-        },
-        "perceptual": {
-            "average_hash": str(imagehash.average_hash(image)),
-            "phash": str(imagehash.phash(image)),
-            "dhash": str(imagehash.dhash(image)),
-            "whash": str(imagehash.whash(image)),
-        },
-    }
-
-    return result
+        return result
+    except Exception as e:
+        return {
+            "success": False,
+            "error": f"Error al calcular hashes: {str(e)}"
+        }

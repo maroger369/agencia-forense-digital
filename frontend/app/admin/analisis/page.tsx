@@ -90,7 +90,7 @@ export default function AnalisisPage() {
                       )}
                     </td>
                     <td className="px-4 py-3 font-mono">
-                      {(evidence.analysis?.elaScore || 0).toFixed(4)}
+                      {(evidence.analysis?.elaScore || 0).toFixed(2)}%
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">
                       {new Date(evidence.analysis?.createdAt).toLocaleDateString("es-BO")}

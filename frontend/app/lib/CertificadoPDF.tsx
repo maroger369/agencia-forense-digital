@@ -249,7 +249,7 @@ const InfoGrid = ({ data }: { data: { label: string; value: string }[] }) => (
 export const CertificadoPDF = ({ data, logoBase64, qrBase64 }: CertificadoPDFProps) => {
   const isManipulated = data.analysis.elaResult === "POSIBLE_MANIPULACION";
   const elaScore = data.analysis.elaScore || 0;
-  const riskLevel = elaScore > 0.5 ? "ALTO" : elaScore > 0.2 ? "MEDIO" : "BAJO";
+  const riskLevel = elaScore > 50 ? "ALTO" : elaScore > 18 ? "MEDIO" : "BAJO";
 
   const report = data.analysis.forensicReport?.detalles || {};
   const hashes = data.analysis.forensicReport?.hashes || {};
@@ -324,7 +324,7 @@ export const CertificadoPDF = ({ data, logoBase64, qrBase64 }: CertificadoPDFPro
 
             <InfoGrid
               data={[
-                { label: "Score ELA (Nivel de Error)", value: elaScore.toFixed(4) },
+                { label: "Score ELA (Nivel de Error)", value: `${elaScore.toFixed(2)}%` },
                 { label: "Nivel de Riesgo General", value: riskLevel },
                 { label: "Nivel de Ruido Promedio", value: report.ruidoMedio || "N/A" },
                 { label: "Brillo / Contraste Promedio", value: `${report.brillo || "N/A"} / ${report.contraste || "N/A"}` },
