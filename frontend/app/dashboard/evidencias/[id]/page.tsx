@@ -119,7 +119,7 @@ export default function EvidenceDetailPage() {
                 {evidence.imagePath ? (
                   <div className="bg-muted rounded-xl overflow-hidden flex items-center justify-center p-4">
                     <img
-                      src={evidence.imagePath?.replace("http://localhost:8000", process.env.NEXT_PUBLIC_FORENSIC_API_URL?.replace(/\/$/, "") || "https://api-python-forense.onrender.com")}
+                      src={evidence.imagePath?.replace("http://localhost:8000", process.env.NODE_ENV === "production" ? "https://api-python-forense.onrender.com" : (process.env.NEXT_PUBLIC_FORENSIC_API_URL?.replace(/\/$/, "") || "http://localhost:8000"))}
                       alt={evidence.originalName}
                       className="max-h-[400px] object-contain rounded-lg"
                     />

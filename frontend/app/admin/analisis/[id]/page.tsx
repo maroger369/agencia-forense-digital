@@ -224,7 +224,7 @@ export default function AnalysisView() {
             <CardContent className="flex flex-col gap-6">
               <div className="space-y-4">
                 <h3 className="font-semibold text-sm flex items-center gap-2"><ImageIcon className="w-4 h-4 text-primary" /> Imagen Original</h3>
-                <img src={evidence.imagePath?.replace("http://localhost:8000", process.env.NEXT_PUBLIC_FORENSIC_API_URL?.replace(/\/$/, "") || "https://api-python-forense.onrender.com")} alt="Evidencia original" className="max-w-full h-auto object-contain rounded-xl shadow-sm max-h-72" />
+                <img src={evidence.imagePath?.replace("http://localhost:8000", process.env.NODE_ENV === "production" ? "https://api-python-forense.onrender.com" : (process.env.NEXT_PUBLIC_FORENSIC_API_URL?.replace(/\/$/, "") || "http://localhost:8000"))} alt="Evidencia original" className="max-w-full h-auto object-contain rounded-xl shadow-sm max-h-72" />
               </div>
 
               <div className="flex flex-col gap-3 text-sm">
